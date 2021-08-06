@@ -14,7 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	validator "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 )
 
 // DefaultMaxBodyBytes is the maximum allowed size of a request body in bytes.
@@ -39,27 +39,29 @@ const (
 )
 
 type Tonic struct {
-	errorHook  ErrorHook
-	bindHook   BindHook
-	renderHook RenderHook
-	execHook   ExecHook
-	mediaType string
+	errorHook         ErrorHook
+	bindHook          BindHook
+	renderHook        RenderHook
+	execHook          ExecHook
+	requestMediaType  string
+	responseMediaType string
 }
 
 var (
-	routes  = make(map[string]*Route)
-	routesMu= sync.Mutex{}
-	funcs    =make(map[string]struct{})
-	funcsMu  =sync.Mutex{}
+	routes   = make(map[string]*Route)
+	routesMu = sync.Mutex{}
+	funcs    = make(map[string]struct{})
+	funcsMu  = sync.Mutex{}
 )
 
 func PourTonic() *Tonic {
 	return &Tonic{
-		errorHook:  DefaultErrorHook,
-		bindHook:   DefaultBindingHook,
-		renderHook: DefaultRenderHook,
-		execHook:   DefaultExecHook,
-		mediaType:  defaultMediaType,
+		errorHook:         DefaultErrorHook,
+		bindHook:          DefaultBindingHook,
+		renderHook:        DefaultRenderHook,
+		execHook:          DefaultExecHook,
+		requestMediaType:  defaultMediaType,
+		responseMediaType: defaultMediaType,
 	}
 }
 
@@ -98,7 +100,7 @@ func DefaultErrorHook(c *gin.Context, e error) (int, interface{}) {
 // It uses Gin JSON binding to bind the body parameters of the request
 // to the input object of the handler.
 // Ir teturns an error if Gin binding fails.
-var DefaultBindingHook BindHook = DefaultBindingHookMaxBodyBytes(DefaultMaxBodyBytes)
+var DefaultBindingHook = DefaultBindingHookMaxBodyBytes(DefaultMaxBodyBytes)
 
 // DefaultBindingHookMaxBodyBytes returns a BindHook with the default logic, with configurable MaxBodyBytes.
 func DefaultBindingHookMaxBodyBytes(maxBodyBytes int64) BindHook {
@@ -147,10 +149,16 @@ func GetRoutes() map[string]*Route {
 	return routes
 }
 
-// MediaType returns the current media type (MIME)
+// RequestMediaType returns the current media type (MIME)
 // used by the actual render hook.
-func (t *Tonic) MediaType() string {
-	return t.mediaType
+func (t *Tonic) RequestMediaType() string {
+	return t.requestMediaType
+}
+
+// ResponseMediaType returns the current media type (MIME)
+// used by the actual render hook.
+func (t *Tonic) ResponseMediaType() string {
+	return t.responseMediaType
 }
 
 // GetErrorHook returns the current error hook.
@@ -173,9 +181,12 @@ func (t *Tonic) GetBindHook() BindHook {
 
 // SetBindHook sets the given hook as the
 // default binding hook.
-func (t *Tonic) SetBindHook(bh BindHook) {
+func (t *Tonic) SetBindHook(bh BindHook, mt string) {
 	if bh != nil {
 		t.bindHook = bh
+	}
+	if mt != "" {
+		t.requestMediaType = mt
 	}
 }
 
@@ -192,7 +203,7 @@ func (t *Tonic) SetRenderHook(rh RenderHook, mt string) {
 		t.renderHook = rh
 	}
 	if mt != "" {
-		t.mediaType = mt
+		t.responseMediaType = mt
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/loopfz/gadgeto/zesty"
+	"github.com/hnzlmnn/gadgeto/zesty"
 )
 
 // Default database settings.

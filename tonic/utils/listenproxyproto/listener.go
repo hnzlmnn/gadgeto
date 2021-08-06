@@ -3,7 +3,7 @@ package listenproxyproto
 import (
 	"time"
 
-	"github.com/loopfz/gadgeto/tonic"
+	"github.com/hnzlmnn/gadgeto/tonic"
 	"github.com/pires/go-proxyproto"
 )
 
