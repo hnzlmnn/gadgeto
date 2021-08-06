@@ -58,6 +58,9 @@ func (r *Route) GetHandler() reflect.Value { return r.handler }
 // GetDeprecated returns the deprecated flag of the route.
 func (r *Route) GetDeprecated() bool { return r.deprecated }
 
+// GetTonic returns the tonic of the route.
+func (r *Route) GetTonic() *Tonic { return r.tonic }
+
 // InputType returns the input type of the handler.
 // If the type is a pointer to a concrete type, it
 // is dereferenced.
