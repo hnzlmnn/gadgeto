@@ -44,12 +44,14 @@ type Tonic struct {
 	renderHook RenderHook
 	execHook   ExecHook
 	mediaType string
-
-	routes   map[string]*Route
-	routesMu sync.Mutex
-	funcs    map[string]struct{}
-	funcsMu  sync.Mutex
 }
+
+var (
+	routes  = make(map[string]*Route)
+	routesMu= sync.Mutex{}
+	funcs    =make(map[string]struct{})
+	funcsMu  =sync.Mutex{}
+)
 
 func PourTonic() *Tonic {
 	return &Tonic{
@@ -58,10 +60,6 @@ func PourTonic() *Tonic {
 		renderHook: DefaultRenderHook,
 		execHook:   DefaultExecHook,
 		mediaType:  defaultMediaType,
-		routes:     make(map[string]*Route),
-		routesMu:   sync.Mutex{},
-		funcs:      make(map[string]struct{}),
-		funcsMu:    sync.Mutex{},
 	}
 }
 
@@ -145,8 +143,8 @@ func DefaultExecHook(c *gin.Context, h gin.HandlerFunc, fname string) {
 }
 
 // GetRoutes returns the routes handled by a tonic-enabled handler.
-func (t *Tonic) GetRoutes() map[string]*Route {
-	return t.routes
+func GetRoutes() map[string]*Route {
+	return routes
 }
 
 // MediaType returns the current media type (MIME)

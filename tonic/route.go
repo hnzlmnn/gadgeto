@@ -32,6 +32,9 @@ type Route struct {
 	// outputType is the type of the output object.
 	// This can be nil if the handler use none.
 	outputType reflect.Type
+
+	// tonic contains a reference to the Tonic that created the Route.
+	tonic *Tonic
 }
 
 // GetVerb returns the HTTP verb of the route.
@@ -108,13 +111,13 @@ func (r *Route) GetTags() []string {
 
 // GetRouteByHandler returns the route informations of
 // the given wrapped handler.
-func (t *Tonic) GetRouteByHandler(h gin.HandlerFunc) (*Route, error) {
+func GetRouteByHandler(h gin.HandlerFunc) (*Route, error) {
 	ctx := &gin.Context{}
 	ctx.Set(tonicWantRouteInfos, nil)
 
-	t.funcsMu.Lock()
-	defer t.funcsMu.Unlock()
-	if _, ok := t.funcs[runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()]; !ok {
+	funcsMu.Lock()
+	defer funcsMu.Unlock()
+	if _, ok := funcs[runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()]; !ok {
 		return nil, errors.New("handler is not wrapped by tonic")
 	}
 	h(ctx)

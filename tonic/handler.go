@@ -56,6 +56,7 @@ func (t *Tonic) Handler(h interface{}, status int, options ...func(*Route)) gin.
 			r.handlerType = ht
 			r.inputType = in
 			r.outputType = out
+			r.tonic = t
 			for _, opt := range options {
 				opt(r)
 			}
@@ -125,19 +126,20 @@ func (t *Tonic) Handler(h interface{}, status int, options ...func(*Route)) gin.
 		handlerType:       ht,
 		inputType:         in,
 		outputType:        out,
+		tonic: 			   t,
 	}
 	for _, opt := range options {
 		opt(route)
 	}
-	t.routesMu.Lock()
-	t.routes[fname] = route
-	t.routesMu.Unlock()
+	routesMu.Lock()
+	routes[fname] = route
+	routesMu.Unlock()
 
 	ret := func(c *gin.Context) { t.execHook(c, f, fname) }
 
-	t.funcsMu.Lock()
-	defer t.funcsMu.Unlock()
-	t.funcs[runtime.FuncForPC(reflect.ValueOf(ret).Pointer()).Name()] = struct{}{}
+	funcsMu.Lock()
+	defer funcsMu.Unlock()
+	funcs[runtime.FuncForPC(reflect.ValueOf(ret).Pointer()).Name()] = struct{}{}
 
 	return ret
 }
