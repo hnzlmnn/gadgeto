@@ -24,17 +24,18 @@ func errorHook(c *gin.Context, e error) (int, interface{}) {
 }
 
 func TestMain(m *testing.M) {
+	t := tonic.PourTonic()
 
-	tonic.SetErrorHook(errorHook)
+	t.SetErrorHook(errorHook)
 
 	g := gin.Default()
-	g.GET("/simple", tonic.Handler(simpleHandler, 200))
-	g.GET("/scalar", tonic.Handler(scalarHandler, 200))
-	g.GET("/error", tonic.Handler(errorHandler, 200))
-	g.GET("/path/:param", tonic.Handler(pathHandler, 200))
-	g.GET("/query", tonic.Handler(queryHandler, 200))
-	g.GET("/query-old", tonic.Handler(queryHandlerOld, 200))
-	g.POST("/body", tonic.Handler(bodyHandler, 200))
+	g.GET("/simple", t.Handler(simpleHandler, 200))
+	g.GET("/scalar", t.Handler(scalarHandler, 200))
+	g.GET("/error", t.Handler(errorHandler, 200))
+	g.GET("/path/:param", t.Handler(pathHandler, 200))
+	g.GET("/query", t.Handler(queryHandler, 200))
+	g.GET("/query-old", t.Handler(queryHandlerOld, 200))
+	g.POST("/body", t.Handler(bodyHandler, 200))
 
 	r = g
 

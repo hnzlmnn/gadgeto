@@ -34,7 +34,7 @@ var (
 //
 // Handler will panic if the tonic handler or its input/output values
 // are of incompatible type.
-func Handler(h interface{}, status int, options ...func(*Route)) gin.HandlerFunc {
+func (t *Tonic) Handler(h interface{}, status int, options ...func(*Route)) gin.HandlerFunc {
 	hv := reflect.ValueOf(h)
 
 	if hv.Kind() != reflect.Func {
@@ -72,30 +72,30 @@ func Handler(h interface{}, status int, options ...func(*Route)) gin.HandlerFunc
 		if in != nil {
 			input := reflect.New(in)
 			// Bind the body with the hook.
-			if err := bindHook(c, input.Interface()); err != nil {
-				handleError(c, BindError{message: err.Error(), typ: in})
+			if err := t.bindHook(c, input.Interface()); err != nil {
+				t.handleError(c, BindError{message: err.Error(), typ: in})
 				return
 			}
 			// Bind query-parameters.
 			if err := bind(c, input, QueryTag, extractQuery); err != nil {
-				handleError(c, err)
+				t.handleError(c, err)
 				return
 			}
 			// Bind path arguments.
 			if err := bind(c, input, PathTag, extractPath); err != nil {
-				handleError(c, err)
+				t.handleError(c, err)
 				return
 			}
 			// Bind headers.
 			if err := bind(c, input, HeaderTag, extractHeader); err != nil {
-				handleError(c, err)
+				t.handleError(c, err)
 				return
 			}
 			// validating query and path inputs if they have a validate tag
 			initValidator()
 			args = append(args, input)
 			if err := validatorObj.Struct(input.Interface()); err != nil {
-				handleError(c, BindError{message: err.Error(), validationErr: err})
+				t.handleError(c, BindError{message: err.Error(), validationErr: err})
 				return
 			}
 		}
@@ -113,10 +113,10 @@ func Handler(h interface{}, status int, options ...func(*Route)) gin.HandlerFunc
 		// Handle the error returned by the
 		// handler invocation, if any.
 		if err != nil {
-			handleError(c, err.(error))
+			t.handleError(c, err.(error))
 			return
 		}
-		renderHook(c, status, val)
+		t.renderHook(c, status, val)
 	}
 	// Register route in tonic-enabled routes map
 	route := &Route{
@@ -129,15 +129,15 @@ func Handler(h interface{}, status int, options ...func(*Route)) gin.HandlerFunc
 	for _, opt := range options {
 		opt(route)
 	}
-	routesMu.Lock()
-	routes[fname] = route
-	routesMu.Unlock()
+	t.routesMu.Lock()
+	t.routes[fname] = route
+	t.routesMu.Unlock()
 
-	ret := func(c *gin.Context) { execHook(c, f, fname) }
+	ret := func(c *gin.Context) { t.execHook(c, f, fname) }
 
-	funcsMu.Lock()
-	defer funcsMu.Unlock()
-	funcs[runtime.FuncForPC(reflect.ValueOf(ret).Pointer()).Name()] = struct{}{}
+	t.funcsMu.Lock()
+	defer t.funcsMu.Unlock()
+	t.funcs[runtime.FuncForPC(reflect.ValueOf(ret).Pointer()).Name()] = struct{}{}
 
 	return ret
 }
@@ -367,12 +367,12 @@ func output(ht reflect.Type, name string) reflect.Type {
 
 // handleError handles any error raised during the execution
 // of the wrapping gin-handler.
-func handleError(c *gin.Context, err error) {
+func (t *Tonic) handleError(c *gin.Context, err error) {
 	if len(c.Errors) == 0 {
 		c.Error(err)
 	}
-	code, resp := errorHook(c, err)
-	renderHook(c, code, resp)
+	code, resp := t.errorHook(c, err)
+	t.renderHook(c, code, resp)
 }
 
 // contains returns whether in contain s.

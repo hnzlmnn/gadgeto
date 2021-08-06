@@ -38,19 +38,32 @@ const (
 	tonicWantRouteInfos = "_tonic_want_route_infos"
 )
 
-var (
-	errorHook  ErrorHook  = DefaultErrorHook
-	bindHook   BindHook   = DefaultBindingHook
-	renderHook RenderHook = DefaultRenderHook
-	execHook   ExecHook   = DefaultExecHook
+type Tonic struct {
+	errorHook  ErrorHook
+	bindHook   BindHook
+	renderHook RenderHook
+	execHook   ExecHook
+	mediaType string
 
-	mediaType = defaultMediaType
+	routes   map[string]*Route
+	routesMu sync.Mutex
+	funcs    map[string]struct{}
+	funcsMu  sync.Mutex
+}
 
-	routes   = make(map[string]*Route)
-	routesMu = sync.Mutex{}
-	funcs    = make(map[string]struct{})
-	funcsMu  = sync.Mutex{}
-)
+func PourTonic() *Tonic {
+	return &Tonic{
+		errorHook:  DefaultErrorHook,
+		bindHook:   DefaultBindingHook,
+		renderHook: DefaultRenderHook,
+		execHook:   DefaultExecHook,
+		mediaType:  defaultMediaType,
+		routes:     make(map[string]*Route),
+		routesMu:   sync.Mutex{},
+		funcs:      make(map[string]struct{}),
+		funcsMu:    sync.Mutex{},
+	}
+}
 
 // BindHook is the hook called by the wrapping gin-handler when
 // binding an incoming request to the tonic-handler's input object.
@@ -132,70 +145,70 @@ func DefaultExecHook(c *gin.Context, h gin.HandlerFunc, fname string) {
 }
 
 // GetRoutes returns the routes handled by a tonic-enabled handler.
-func GetRoutes() map[string]*Route {
-	return routes
+func (t *Tonic) GetRoutes() map[string]*Route {
+	return t.routes
 }
 
 // MediaType returns the current media type (MIME)
 // used by the actual render hook.
-func MediaType() string {
-	return mediaType
+func (t *Tonic) MediaType() string {
+	return t.mediaType
 }
 
 // GetErrorHook returns the current error hook.
-func GetErrorHook() ErrorHook {
-	return errorHook
+func (t *Tonic) GetErrorHook() ErrorHook {
+	return t.errorHook
 }
 
 // SetErrorHook sets the given hook as the
 // default error handling hook.
-func SetErrorHook(eh ErrorHook) {
+func (t *Tonic) SetErrorHook(eh ErrorHook) {
 	if eh != nil {
-		errorHook = eh
+		t.errorHook = eh
 	}
 }
 
 // GetBindHook returns the current bind hook.
-func GetBindHook() BindHook {
-	return bindHook
+func (t *Tonic) GetBindHook() BindHook {
+	return t.bindHook
 }
 
 // SetBindHook sets the given hook as the
 // default binding hook.
-func SetBindHook(bh BindHook) {
+func (t *Tonic) SetBindHook(bh BindHook) {
 	if bh != nil {
-		bindHook = bh
+		t.bindHook = bh
 	}
 }
 
 // GetRenderHook returns the current render hook.
-func GetRenderHook() RenderHook {
-	return renderHook
+func (t *Tonic) GetRenderHook() RenderHook {
+	return t.renderHook
 }
 
 // SetRenderHook sets the given hook as the default
 // rendering hook. The media type is used to generate
 // the OpenAPI specification.
-func SetRenderHook(rh RenderHook, mt string) {
+func (t *Tonic) SetRenderHook(rh RenderHook, mt string) {
 	if rh != nil {
-		renderHook = rh
+		t.renderHook = rh
 	}
 	if mt != "" {
-		mediaType = mt
+		t.mediaType = mt
 	}
 }
 
 // SetExecHook sets the given hook as the
 // default execution hook.
-func SetExecHook(eh ExecHook) {
+func (t *Tonic) SetExecHook(eh ExecHook) {
 	if eh != nil {
-		execHook = eh
+		t.execHook = eh
 	}
 }
 
 // GetExecHook returns the current execution hook.
-func GetExecHook() ExecHook {
-	return execHook
+func (t *Tonic) GetExecHook() ExecHook {
+	return t.execHook
 }
 
 // Description set the description of a route.
